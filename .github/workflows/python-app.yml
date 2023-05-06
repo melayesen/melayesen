@@ -1,0 +1,90 @@
+import pygame
+import random
+
+# Initialisation de Pygame
+pygame.init()
+
+# Définition des constantes
+WINDOW_WIDTH = 800
+WINDOW_HEIGHT = 600
+WHITE = (255, 255, 255)
+RED = (255, 0, 0)
+GREEN = (0, 255, 0)
+BLACK = (0, 0, 0)
+CAR_WIDTH = 20
+CAR_HEIGHT = 40
+TRAFFIC_LIGHT_SIZE = 50
+TRAFFIC_LIGHT_POS = (WINDOW_WIDTH // 2 - TRAFFIC_LIGHT_SIZE // 2, WINDOW_HEIGHT // 2 - TRAFFIC_LIGHT_SIZE // 2)
+
+# Création de la fenêtre
+window = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
+pygame.display.set_caption("Carrefour à feux")
+
+# Création des feux tricolores
+traffic_lights = {
+    "horizontal": pygame.Surface((TRAFFIC_LIGHT_SIZE, TRAFFIC_LIGHT_SIZE)),
+    "vertical": pygame.Surface((TRAFFIC_LIGHT_SIZE, TRAFFIC_LIGHT_SIZE))
+}
+
+traffic_lights["horizontal"].fill(RED)
+traffic_lights["vertical"].fill(GREEN)
+
+# Variables pour la gestion du trafic
+traffic = {
+    "horizontal": [],
+    "vertical": []
+}
+
+spawn_time = 2000
+last_spawn_time = pygame.time.get_ticks()
+
+# Boucle principale
+running = True
+clock = pygame.time.Clock()
+while running:
+    # Gestion des événements
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+
+    # Affichage des feux tricolores
+    window.fill(WHITE)
+    window.blit(traffic_lights["horizontal"], (TRAFFIC_LIGHT_POS[0], TRAFFIC_LIGHT_POS[1] - TRAFFIC_LIGHT_SIZE))
+    window.blit(traffic_lights["vertical"], (TRAFFIC_LIGHT_POS[0] - TRAFFIC_LIGHT_SIZE, TRAFFIC_LIGHT_POS[1]))
+
+    # Gestion du trafic
+    current_time = pygame.time.get_ticks()
+
+    if current_time - last_spawn_time > spawn_time:
+        last_spawn_time = current_time
+        car_direction = random.choice(["horizontal", "vertical"])
+        traffic[car_direction].append({"x": 0, "y": TRAFFIC_LIGHT_POS[1] if car_direction == "horizontal" else WINDOW_HEIGHT})
+
+    for direction, cars in traffic.items():
+        for car in cars:
+            if direction == "horizontal":
+                car["x"] += 5
+            else:
+                car["y"] -= 5
+
+            if car["x"] > WINDOW_WIDTH or car["y"] < -CAR_HEIGHT:
+                traffic[direction].remove(car)
+            else:
+                pygame.draw.rect(window, BLACK, (car["x"], car["y"], CAR_WIDTH, CAR_HEIGHT))
+
+    # Changement des feux tricolores
+    if current_time % 6000 > 5000:
+        traffic_lights["horizontal"].fill(GREEN)
+        traffic_lights["vertical"].fill(RED)
+    else:
+        traffic_lights["horizontal"].fill(RED)
+        traffic_lights["vertical"].fill(GREEN)
+
+    # Rafraîchissement de l'affichage
+    pygame.display.flip()
+
+    # Limitation de la vitesse de rafraîchissement
+    clock.tick(60)
+
+# Fermeture de Pygame
+pygame.quit()
